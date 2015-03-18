@@ -1475,8 +1475,12 @@ class COIN_CMD(LpSolver_CMD):
                     'Unbounded': LpStatusUnbounded,
                     'Stopped': LpStatusNotSolved}
         with open(filename) as f:
-            statusstr = f.readline().split()[0]
-            status = cbcStatus.get(statusstr, LpStatusUndefined)
+            status_line = f.readline()
+            if status_line.startswith("Stopped on time (no integer solution - continuous used)"):
+                status = LpStatusUndefined
+            else:
+                statusstr = status_line.split()[0]
+                status = cbcStatus.get(statusstr, LpStatusUndefined)
             for l in f:
                 if len(l)<=2:
                     break
