@@ -1335,7 +1335,7 @@ class COIN_CMD(LpSolver_CMD):
     def __init__(self, path = None, keepFiles = 0, mip = 1,
             msg = 0, cuts = None, presolve = None, dual = None,
             strong = None, options = [],
-            fracGap = None, maxSeconds = None, threads = None):
+            fracGap = None, maxSeconds = None, threads = None, output_filename=None):
         LpSolver_CMD.__init__(self, path, keepFiles, mip, msg, options)
         self.cuts = cuts
         self.presolve = presolve
@@ -1344,6 +1344,7 @@ class COIN_CMD(LpSolver_CMD):
         self.fracGap = fracGap
         self.maxSeconds = maxSeconds
         self.threads = threads
+        self.output_filename = output_filename
         #TODO hope this gets fixed in cbc as it does not like the c:\ in windows paths
         if os.name == 'nt':
             self.tmpDir = ''
@@ -1413,6 +1414,8 @@ class COIN_CMD(LpSolver_CMD):
         cmds += "solution "+tmpSol+" "
         if self.msg:
             pipe = None
+        elif self.output_filename:
+            pipe = open(self.output_filename, 'w')
         else:
             pipe = open(os.devnull, 'w')
         log.debug(self.path + cmds)
