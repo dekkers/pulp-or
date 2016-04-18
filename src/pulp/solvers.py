@@ -1335,7 +1335,7 @@ class COIN_CMD(LpSolver_CMD):
     def __init__(self, path = None, keepFiles = 0, mip = 1,
             msg = 0, cuts = None, presolve = None, dual = None,
             strong = None, options = [],
-            fracGap = None, maxSeconds = None, threads = None, output_filename=None):
+            fracGap = None, maxSeconds = None, threads = None, output_filename=None, mipStart=False):
         LpSolver_CMD.__init__(self, path, keepFiles, mip, msg, options)
         self.cuts = cuts
         self.presolve = presolve
@@ -1345,6 +1345,7 @@ class COIN_CMD(LpSolver_CMD):
         self.maxSeconds = maxSeconds
         self.threads = threads
         self.output_filename = output_filename
+        self.mipStart = mipStart
         #TODO hope this gets fixed in cbc as it does not like the c:\ in windows paths
         if os.name == 'nt':
             self.tmpDir = ''
@@ -1371,18 +1372,23 @@ class COIN_CMD(LpSolver_CMD):
         if not self.executable(self.path):
             raise PulpSolverError("Pulp: cannot execute %s cwd: %s"%(self.path,
                                    os.getcwd()))
+        tmpMipStart = None
         if not self.keepFiles:
             pid = os.getpid()
             tmpLp = os.path.join(self.tmpDir, "%d-pulp.lp" % pid)
             tmpMps = os.path.join(self.tmpDir, "%d-pulp.mps" % pid)
             tmpSol = os.path.join(self.tmpDir, "%d-pulp.sol" % pid)
+            if self.mipStart:
+                tmpMipStart = os.path.join(self.tmpDir, "%d-pulp.start" % pid)
         else:
             tmpLp = lp.name+"-pulp.lp"
             tmpMps = lp.name+"-pulp.mps"
             tmpSol = lp.name+"-pulp.sol"
+            if self.mipStart:
+                tmpMipStart = lp.name+"-pulp.start"
         if use_mps:
             vs, variablesNames, constraintsNames, objectiveName = lp.writeMPS(
-                        tmpMps, rename = 1)
+                        tmpMps, rename = 1, mipStart=tmpMipStart)
             cmds = ' '+tmpMps+" "
             if lp.sense == LpMaximize:
                 cmds += 'max '
@@ -1404,6 +1410,8 @@ class COIN_CMD(LpSolver_CMD):
             #cbc.write("oddhole on "
             cmds += "knapsack on "
             cmds += "probing on "
+        if self.mipStart:
+            cmds += "mipstart " + tmpMipStart + " "
         for option in self.options:
             cmds += option+" "
         if self.mip:

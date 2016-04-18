@@ -1392,7 +1392,7 @@ class LpProblem(object):
                 coefs.extend([(translation[v.name], ctr, cst[v]) for v in cst])
         return coefs
 
-    def writeMPS(self, filename, mpsSense = 0, rename = 0, mip = 1):
+    def writeMPS(self, filename, mpsSense = 0, rename = 0, mip = 1, mipStart = None):
         wasNone, dummyVar = self.fixObjective()
         f = open(filename, "w")
         if mpsSense == 0: mpsSense = self.sense
@@ -1479,6 +1479,10 @@ class LpProblem(object):
         f.write("ENDATA\n")
         f.close()
         self.restoreObjective(wasNone, dummyVar)
+        if mipStart:
+            with open(mipStart, "w") as f:
+                for v in vs:
+                    f.write("0 %s %f 0\n" % (variablesNames[v.name], v.init))
         # returns the variables, in writing order
         if rename == 0:
             return vs
